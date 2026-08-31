@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Action Flow — Structured Extraction for Free-Text PO Item Creation</title>
+<style>
+  :root{
+    --ink:#1a1a2e;
+    --ink-soft:#5b5f76;
+    --line:#e6e7ec;
+    --blue:#3b5bfd;
+    --red:#e5484d;
+    --green:#2fb380;
+    --bg:#ffffff;
+    --note-bg:#f6f7f9;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    gap:24px;
+    padding:14px 28px;
+    border-bottom:1px solid var(--line);
+  }
+  .play-btn{
+    width:40px;height:40px;border-radius:50%;
+    background:var(--blue);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .play-btn svg{width:14px;height:14px;fill:#fff;}
+  .title-block{display:flex;flex-direction:column;gap:2px;margin-right:8px;}
+  .title-block .name{font-size:16px;font-weight:700;color:var(--ink);}
+  .title-block .sub{font-size:12px;color:var(--ink-soft);}
+  .topbar-spacer{flex:1;}
+  .topbar-action{font-size:13px;color:var(--ink-soft);}
+
+  /* ---------- Canvas ---------- */
+  .canvas-wrap{
+    width:100%;
+    overflow-x:auto;
+    padding:40px 0 60px 0;
+  }
+  .canvas{
+    position:relative;
+    width:1400px;
+    height:1650px;
+    margin:0 auto;
+  }
+  svg.connectors{
+    position:absolute;
+    top:0;left:0;
+    width:1400px;height:1650px;
+    pointer-events:none;
+  }
+
+  .node{
+    position:absolute;
+    width:280px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    transform:translateX(-50%);
+    text-align:center;
+  }
+  .node-circle{
+    width:96px;height:96px;
+    border-radius:50%;
+    background:#111119;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .node-circle.outcome{
+    background:#fff;
+    border:2px dashed #c8c9d4;
+  }
+  .node-circle svg{width:38px;height:38px;}
+  .node-circle.outcome svg{width:34px;height:34px;}
+
+  .node-label{margin-top:10px;}
+  .node-label .n{font-size:14px;font-weight:700;color:var(--ink);}
+  .node-label .sub{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+
+  .note{
+    margin-top:10px;
+    background:var(--note-bg);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:10px 12px;
+    font-size:12px;
+    line-height:1.45;
+    color:var(--ink-soft);
+    text-align:left;
+  }
+  .note b{color:var(--ink);}
+
+  .branch-tag{
+    position:absolute;
+    font-size:11.5px;
+    font-weight:700;
+    padding:3px 10px;
+    border-radius:12px;
+    background:#fff;
+  }
+  .branch-tag.high{color:var(--green);border:1px solid var(--green);}
+  .branch-tag.low{color:#c9852a;border:1px solid #c9852a;}
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="play-btn"><svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg></div>
+    <div class="title-block">
+      <span class="name">Structured Extraction — Free-Text PO Item</span>
+      <span class="sub">procurement-pov</span>
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-action">Blueprint ⌄</div>
+  </div>
+
+  <div class="canvas-wrap">
+    <div class="canvas">
+
+      <svg class="connectors" viewBox="0 0 1400 1650">
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 z" fill="#c8c9d4"/>
+          </marker>
+        </defs>
+        <!-- trunk: node1 -> node2 -> node3 -->
+        <line x1="700" y1="156" x2="700" y2="360" stroke="#c8c9d4" stroke-width="2" stroke-dasharray="5,6" marker-end="url(#arrow)"/>
+        <line x1="700" y1="456" x2="700" y2="660" stroke="#c8c9d4" stroke-width="2" stroke-dasharray="5,6" marker-end="url(#arrow)"/>
+
+        <!-- router -> branch A / branch B -->
+        <path d="M700,756 C700,850 350,850 350,980" fill="none" stroke="#c8c9d4" stroke-width="2" stroke-dasharray="5,6" marker-end="url(#arrow)"/>
+        <path d="M700,756 C700,850 1050,850 1050,980" fill="none" stroke="#c8c9d4" stroke-width="2" stroke-dasharray="5,6" marker-end="url(#arrow)"/>
+
+        <!-- branch A: node4a -> node5a -->
+        <line x1="350" y1="1076" x2="350" y2="1300" stroke="#c8c9d4" stroke-width="2" stroke-dasharray="5,6" marker-end="url(#arrow)"/>
+        <!-- branch B: node4b -> node5b -->
+        <line x1="1050" y1="1076" x2="1050" y2="1300" stroke="#c8c9d4" stroke-width="2" stroke-dasharray="5,6" marker-end="url(#arrow)"/>
+      </svg>
+
+      <!-- STEP 1 -->
+      <div class="node" style="left:700px; top:60px;">
+        <div class="node-circle">
+          <svg viewBox="0 0 24 24" fill="#fff"><path d="M12 3a9 9 0 100 18 9 9 0 010-18zm0 5a4 4 0 100 8 4 4 0 010-8z"/></svg>
+        </div>
+        <div class="node-label">
+          <div class="n">Celonis — Watch Trigger</div>
+          <div class="sub">Step 1</div>
+        </div>
+        <div class="note"><b>What it does:</b> detects in near real time the creation of a new <b>"Create Free-Text Requisition Item"</b> on the Knowledge Model, and automatically starts the flow.</div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="node" style="left:700px; top:360px;">
+        <div class="node-circle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 12h8M8 15h5"/></svg>
+        </div>
+        <div class="node-label">
+          <div class="n">Celonis — HTTP Request</div>
+          <div class="sub">Step 2 · to ML Workbench</div>
+        </div>
+        <div class="note"><b>What it does:</b> sends the free-text description to the script hosted in <b>ML Workbench</b> (via the native Action Flow ↔ ML Workbench webhook). The script extracts category, quantity, unit of measure, and suggested vendor, along with a confidence score.</div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="node" style="left:700px; top:660px;">
+        <div class="node-circle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><path d="M6 4v16M6 12h12l-4-4M18 12l-4 4"/></svg>
+        </div>
+        <div class="node-label">
+          <div class="n">Celonis — Router</div>
+          <div class="sub">Step 3 · conditional branch</div>
+        </div>
+        <div class="note"><b>What it does:</b> evaluates the confidence score returned by the model and routes the flow down one of the two paths below, with no logic needed outside Celonis.</div>
+      </div>
+
+      <div class="branch-tag high" style="left:410px; top:860px;">High confidence</div>
+      <div class="branch-tag low" style="left:930px; top:860px;">Low confidence</div>
+
+      <!-- STEP 4A -->
+      <div class="node" style="left:350px; top:980px;">
+        <div class="node-circle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </div>
+        <div class="node-label">
+          <div class="n">Celonis — Update Augmented Attribute</div>
+          <div class="sub">Step 4A</div>
+        </div>
+        <div class="note"><b>What it does:</b> automatically writes the extracted fields (category, quantity, vendor) onto the PO Item, making it eligible for automatic Purchase Order creation without buyer involvement.</div>
+      </div>
+
+      <!-- STEP 5A (outcome) -->
+      <div class="node" style="left:350px; top:1300px;">
+        <div class="node-circle outcome">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <div class="node-label">
+          <div class="n">Outcome: automatic creation</div>
+          <div class="sub">No further module required</div>
+        </div>
+        <div class="note">The PO Item continues down the standard, already-automated path in Celonis for "Create Purchase Order Item" → "Send Purchase Order," with no manual fallback.</div>
+      </div>
+
+      <!-- STEP 4B -->
+      <div class="node" style="left:1050px; top:980px;">
+        <div class="node-circle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>
+        </div>
+        <div class="node-label">
+          <div class="n">Celonis — Create Task</div>
+          <div class="sub">Step 4B</div>
+        </div>
+        <div class="note"><b>What it does:</b> creates a Task assigned to the buyer, with the fields suggested by the model already pre-filled (category, quantity, vendor) to confirm or correct in one click, instead of filling everything in manually from scratch.</div>
+      </div>
+
+      <!-- STEP 5B -->
+      <div class="node" style="left:1050px; top:1300px;">
+        <div class="node-circle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M4 7l8 6 8-6"/></svg>
+        </div>
+        <div class="node-label">
+          <div class="n">Celonis — Send Email</div>
+          <div class="sub">Step 5B</div>
+        </div>
+        <div class="note"><b>What it does:</b> emails the assigned buyer that a new Task is ready for review, with a direct link — speeding up pickup compared to sitting passively in a queue.</div>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>
